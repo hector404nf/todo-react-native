@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useImperativeHandle, forwardRef} from 'react';
+import React, {useState, useEffect, useImperativeHandle, forwardRef} from 'react';
 import {
   InterstitialAd,
   AdEventType,
@@ -41,14 +41,17 @@ const AdInterstitial = forwardRef<AdInterstitialRef, Props>(
 
       const loadAd = async () => {
         try {
+          console.log('[AdMob] Creating interstitial ad with unit ID:', adUnitId);
           const interstitialAd = await InterstitialAd.createForAdRequest(adUnitId, {
             requestNonPersonalizedAdsOnly: true,
           });
+          console.log('[AdMob] Interstitial ad instance created successfully');
 
           unsubscribeLoaded = interstitialAd.addAdEventListener(
             AdEventType.LOADED,
             () => {
               console.log('[AdMob] LOADED event fired - setting loaded to true');
+              console.log('[AdMob] Interstitial ad internal loaded state:', interstitialAd.loaded);
               setLoaded(true);
               onAdLoaded?.();
               console.log('[AdMob] Interstitial ad loaded successfully');
@@ -91,7 +94,9 @@ const AdInterstitial = forwardRef<AdInterstitialRef, Props>(
           );
 
           setInterstitial(interstitialAd);
+          console.log('[AdMob] Starting to load interstitial ad...');
           interstitialAd.load();
+          console.log('[AdMob] Load request sent for interstitial ad');
         } catch (error) {
           console.error('[AdMob] Error creating interstitial ad:', error);
           onAdFailedToLoad?.(error);

@@ -44,24 +44,43 @@ const HomeScreen: React.FC = () => {
 
   const handleToggleTodo = async (todoId: string) => {
     await AdManager.incrementUserActions();
+    
+    // Obtener el estado actual antes del toggle
+    const todoBeforeToggle = todos.find(todo => todo.id === todoId);
     toggleTodo(todoId);
     
-    // Mostrar intersticial después de completar tareas (ocasionalmente)
-    const completedTodos = todos.filter(todo => todo.completed).length;
-    if (completedTodos > 0 && completedTodos % 5 === 0) {
-      const canShow = await AdManager.canShowInterstitial();
-      if (canShow && interstitialRef.current?.isLoaded) {
-        setTimeout(async () => {
-          // Re-verificar si el anuncio sigue cargado después del delay
-          if (interstitialRef.current?.isLoaded) {
-            console.log('[AdMob] HomeScreen: Showing interstitial ad after todo completion');
-            await interstitialRef.current.showAd();
-            AdManager.recordInterstitialShown();
-          } else {
-            console.log('[AdMob] HomeScreen: Interstitial ad no longer loaded after delay');
-          }
-        }, 1000);
+    // Solo mostrar intersticial si se está completando una tarea (no descompletando)
+    if (todoBeforeToggle && !todoBeforeToggle.completed) {
+      console.log('[AdMob] HomeScreen: Task completed, checking interstitial conditions');
+      
+      // Contar tareas completadas después del toggle
+      const completedTodos = todos.filter(todo => todo.completed).length + 1; // +1 porque el estado aún no se actualizó
+      console.log('[AdMob] HomeScreen: Completed todos count:', completedTodos);
+      
+      if (completedTodos > 0 && completedTodos % 3 === 0) { // Cambiado de 5 a 3 para testing
+        console.log('[AdMob] HomeScreen: Checking if can show interstitial (every 3 completed tasks)');
+        const canShow = await AdManager.canShowInterstitial();
+        console.log('[AdMob] HomeScreen: Can show interstitial:', canShow, 'Ad loaded:', interstitialRef.current?.isLoaded);
+        
+        if (canShow && interstitialRef.current?.isLoaded) {
+          setTimeout(async () => {
+            // Re-verificar si el anuncio sigue cargado después del delay
+            if (interstitialRef.current?.isLoaded) {
+              console.log('[AdMob] HomeScreen: Showing interstitial ad after todo completion');
+              await interstitialRef.current.showAd();
+              AdManager.recordInterstitialShown();
+            } else {
+              console.log('[AdMob] HomeScreen: Interstitial ad no longer loaded after delay');
+            }
+          }, 1000);
+        } else {
+          console.log('[AdMob] HomeScreen: Cannot show interstitial - conditions not met');
+        }
+      } else {
+        console.log('[AdMob] HomeScreen: Not showing interstitial - completed todos:', completedTodos, 'not multiple of 3');
       }
+    } else {
+      console.log('[AdMob] HomeScreen: Task uncompleted or not found, no interstitial check');
     }
   };
 
@@ -216,9 +235,10 @@ const HomeScreen: React.FC = () => {
       {/* Componentes de ads invisibles */}
       <AdInterstitial
         ref={interstitialRef}
-        onAdLoaded={() => console.log('Interstitial ad loaded')}
+        onAdLoaded={() => console.log('[AdMob] HomeScreen: Interstitial ad loaded')}
         onAdClosed={handleInterstitialClosed}
-        onAdFailedToLoad={(error) => console.log('Interstitial ad failed:', error)}
+        onAdFailedToLoad={(error) => console.log('[AdMob] HomeScreen: Interstitial ad failed:', error)}
+        onAdReloading={() => console.log('[AdMob] HomeScreen: Interstitial ad is reloading')}
       />
       
       <AdRewarded

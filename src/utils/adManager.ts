@@ -3,11 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Configuración para evitar abuso de ads
 const AD_CONFIG = {
   // Tiempo mínimo entre anuncios intersticiales (en milisegundos)
-  INTERSTITIAL_COOLDOWN: 3 * 60 * 1000, // 3 minutos
+  INTERSTITIAL_COOLDOWN: 30 * 1000, // 30 segundos para testing
   // Tiempo mínimo entre anuncios rewarded (en milisegundos)
   REWARDED_COOLDOWN: 2 * 60 * 1000, // 2 minutos
   // Máximo de anuncios intersticiales por sesión
-  MAX_INTERSTITIALS_PER_SESSION: 3,
+  MAX_INTERSTITIALS_PER_SESSION: 10, // Aumentado para testing
   // Máximo de anuncios rewarded por día
   MAX_REWARDED_PER_DAY: 5,
   // Acciones mínimas del usuario antes de mostrar intersticial
@@ -88,6 +88,8 @@ class AdManager {
       await this.initialize();
       await this.resetDailyCountersIfNeeded();
 
+      console.log('[AdManager] Checking interstitial availability...');
+
       // Verificar acciones mínimas del usuario
       if (this.userActionsCount < AD_CONFIG.MIN_ACTIONS_FOR_INTERSTITIAL) {
         console.log('[AdManager] Not enough user actions for interstitial. Current:', this.userActionsCount, 'Required:', AD_CONFIG.MIN_ACTIONS_FOR_INTERSTITIAL);
@@ -100,20 +102,26 @@ class AdManager {
       const lastInterstitialTime = await AsyncStorage.getItem(STORAGE_KEYS.LAST_INTERSTITIAL);
       if (lastInterstitialTime) {
         const timeSinceLastAd = Date.now() - parseInt(lastInterstitialTime);
+        const cooldownRemaining = AD_CONFIG.INTERSTITIAL_COOLDOWN - timeSinceLastAd;
+        console.log('[AdManager] Time since last interstitial:', Math.floor(timeSinceLastAd / 1000), 'seconds');
         if (timeSinceLastAd < AD_CONFIG.INTERSTITIAL_COOLDOWN) {
-          console.log('[AdManager] Interstitial cooldown active');
+          console.log('[AdManager] Interstitial cooldown active. Remaining:', Math.floor(cooldownRemaining / 1000), 'seconds');
           return false;
         }
+      } else {
+        console.log('[AdManager] No previous interstitial found - cooldown passed');
       }
 
       // Verificar límite diario
       const interstitialCount = await AsyncStorage.getItem(STORAGE_KEYS.INTERSTITIAL_COUNT);
       const count = parseInt(interstitialCount || '0');
+      console.log('[AdManager] Interstitial count today:', count, 'Max allowed:', AD_CONFIG.MAX_INTERSTITIALS_PER_SESSION);
       if (count >= AD_CONFIG.MAX_INTERSTITIALS_PER_SESSION) {
         console.log('[AdManager] Max interstitials per session reached');
         return false;
       }
 
+      console.log('[AdManager] All checks passed - can show interstitial');
       return true;
     } catch (error) {
       console.error('[AdManager] Error checking interstitial availability:', error);
