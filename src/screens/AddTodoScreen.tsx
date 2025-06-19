@@ -12,6 +12,7 @@ import {
   StatusBar,
   Keyboard,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useTodos} from '@/context/TodoContext';
@@ -168,71 +169,64 @@ const AddTodoScreen: React.FC = () => {
         onPress={handleCancel}
       />
       
-      <KeyboardAvoidingView
-        style={[styles.keyboardContainer, {
-          paddingBottom: keyboardHeight > 0 ? keyboardHeight + 60 : 30
-        }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.header}>
-              <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
-                <Text style={styles.closeButtonText}>×</Text>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
+              <Text style={styles.closeButtonText}>×</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.form}>
+            <TextInput
+              style={styles.titleInput}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="New To-Do"
+              placeholderTextColor="#CCCCCC"
+              autoFocus
+            />
+            <TextInput
+              style={styles.descriptionInput}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Description"
+              placeholderTextColor="#CCCCCC"
+              multiline
+            />
+          </View>
+
+          <View style={styles.toolbar}>
+            <View style={styles.toolbarLeft}>
+              <TouchableOpacity style={styles.toolButton}>
+                <Text style={styles.toolButtonText}>#</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.toolButton}>
+                <Text style={styles.toolButtonText}>⏰</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.toolButton}>
+                <Text style={styles.toolButtonText}>☰</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.toolButton}>
+                <Text style={styles.toolButtonText}>⎘</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.form}>
-              <TextInput
-                style={styles.titleInput}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="New To-Do"
-                placeholderTextColor="#CCCCCC"
-                autoFocus
-              />
-              <TextInput
-                style={styles.descriptionInput}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Description"
-                placeholderTextColor="#CCCCCC"
-                multiline
-              />
-            </View>
-
-            <View style={styles.toolbar}>
-              <View style={styles.toolbarLeft}>
-                <TouchableOpacity style={styles.toolButton}>
-                  <Text style={styles.toolButtonText}>#</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolButton}>
-                  <Text style={styles.toolButtonText}>⏰</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolButton}>
-                  <Text style={styles.toolButtonText}>☰</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolButton}>
-                  <Text style={styles.toolButtonText}>⎘</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.toolbarRight}>
-                <TouchableOpacity style={styles.inboxButton}>
-                  <Text style={styles.inboxButtonText}>⌂ Inbox</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                  <Text style={styles.saveButtonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.toolbarRight}>
+              <TouchableOpacity style={styles.inboxButton}>
+                <Text style={styles.inboxButtonText}>⌂ Inbox</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
       
       {/* Ad Banner positioned outside modal */}
-      <View style={styles.adBanner}>
+      {/* <View style={styles.adBanner}>
         <AdBanner />
-      </View>
+      </View> */}
       
       {/* Componente de ad intersticial invisible */}
       <AdInterstitial
@@ -248,12 +242,14 @@ const AddTodoScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
+    justifyContent: 'flex-end', // Alinear contenido en la parte inferior
   },
   overlay: {
     position: 'absolute',
@@ -270,12 +266,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     justifyContent: 'flex-end',
-    paddingBottom: 20,
     zIndex: 1001,
   },
   modalContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     justifyContent: 'flex-end',
     zIndex: 1002,
+    marginBottom: 0,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
@@ -286,7 +289,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 10,
-    maxHeight: '95%',
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     flexDirection: 'row',
@@ -311,6 +315,7 @@ const styles = StyleSheet.create({
   },
   form: {
     paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   titleInput: {
     fontSize: 18,
@@ -325,8 +330,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666666',
     paddingVertical: 8,
-    minHeight: 200,
-    maxHeight: 2000,
+    minHeight: 60,
+    maxHeight: 100,
     textAlignVertical: 'top',
   },
   toolbar: {
@@ -338,6 +343,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
     backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    position: 'relative',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1003,
   },
   toolbarLeft: {
     flexDirection: 'row',
